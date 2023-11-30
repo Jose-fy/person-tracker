@@ -13,6 +13,7 @@ func main() {
 	person := GetUserInput()
 
 	fmt.Printf("%+v\n", person)
+    db.InsertPerson(person)
 
 	// Rest of your code...
 	people, err := db.QueryAllPeople()

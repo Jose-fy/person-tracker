@@ -32,10 +32,26 @@ func createTables(){
 	}
 }
 
-// func insertEntry(){
+func InsertPerson(person model.Person) error{
+
+	stmt, err := DB.Prepare("INSERT INTO people (name, context) VALUES (?, ?)")
+
+	if err != nil {
+        return err // return an error here
+    }
+
+	defer stmt.Close()
+
+	_, execErr := stmt.Exec(person.Name, person.Context)
+
+	if execErr != nil {
+        // handle the execution error
+        return execErr
+    }
 
 
-// }
+	return nil
+}
 
 
 func QueryAllPeople() ([]model.Person, error) {
