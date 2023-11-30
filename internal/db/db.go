@@ -32,6 +32,12 @@ func createTables(){
 	}
 }
 
+// func insertEntry(){
+
+
+// }
+
+
 func QueryAllPeople() ([]model.Person, error) {
 
 	var people []model.Person

@@ -2,23 +2,28 @@
 package main
 
 import (
-    "log"
-    "person-tracker/internal/db"
-    "fmt"
+	"fmt"
+	"log"
+	"person-tracker/internal/db"
 )
 
 func main() {
-    db.InitDB("mydb.db")
-    // Rest of your code...
+	db.InitDB("mydb.db")
+
+	person := GetUserInput()
+
+	fmt.Printf("%+v\n", person)
+
+	// Rest of your code...
 	people, err := db.QueryAllPeople()
 
-    if err != nil{
-        log.Fatal("Error")
-    }
+	if err != nil {
+		log.Fatal("Error")
+	}
 
-    if len(people) != 0 {
-        for _, person := range(people){
-            fmt.Printf("%+v\n", person)
-        }
-    }
+	if len(people) != 0 {
+		for _, person := range people {
+			fmt.Printf("%+v\n", person)
+		}
+	}
 }
