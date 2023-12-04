@@ -49,37 +49,50 @@ func InsertPerson(person model.Person) error{
         return execErr
     }
 
-
 	return nil
 }
 
-
 func QueryAllPeople() ([]model.Person, error) {
 
-	var people []model.Person
+	rows, err := DB.Query("SELECT name, context FROM people")
 
-	rows, err := DB.Query(`SELECT name, context FROM people`)
-
-	if err != nil {
-        return nil, err // return an error here
+    if err != nil {
+        return nil, err
     }
 
 	defer rows.Close()
 
-	for rows.Next() {
-		var p model.Person
-		err := rows.Scan(&p.Name, &p.Context)
-
-		if err != nil {
-			return nil, err // return an error here
-		}
-		people = append(people, p)
-	}
-
-    if err = rows.Err(); err != nil {
-        return nil, err // handle any error encountered during iteration
-    }
-
-    return people, nil
+	return processRows(rows)
 }
 
+
+func FindPeopleByName(name string) ([]model.Person, error) {
+
+	rows, err := DB.Query("SELECT name, context FROM people WHERE name = ?", name)
+
+	if err != nil {
+        return nil, err
+    }
+
+	defer rows.Close()
+
+	return processRows(rows)
+}
+
+
+func processRows(rows *sql.Rows) ([]model.Person, error) {
+
+	var people []model.Person
+
+	for rows.Next() {
+        var p model.Person
+        if err := rows.Scan(&p.Name, &p.Context); err != nil {
+            return nil, err
+        }
+        people = append(people, p)
+    }
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+    return people, nil
+}
