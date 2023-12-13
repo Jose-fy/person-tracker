@@ -2,25 +2,22 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
-	"person-tracker/internal/db"
-	"person-tracker/internal/api"
-	"bufio"
-	"os"
-	"github.com/spf13/cobra"
 	"net/http"
+	"os"
+	"person-tracker/internal/api"
+	"person-tracker/internal/db"
+    "person-tracker/internal/model"
 
-
+	"github.com/spf13/cobra"
 )
 
 func main() {
 	db.InitDB("mydb.db")
 
     var rootCmd = &cobra.Command{Use: "myapp"}
-
-	client := &http.Client{}
-
 
     var cmdQueryAll = &cobra.Command{
         Use:   "queryall",
@@ -53,7 +50,14 @@ func main() {
 		Use:  "openai",
 		Short: "Talk with OpenAI's api (chatgpt)",
 		Run: func(cmd *cobra.Command, args []string) {
-			result, err := openai.SendMessageGPT(*client, "Say this is a test")
+
+			client := &openai.RealOpenAIClient{
+				HTTPClient: &http.Client{},
+			}
+
+			message := "Say this is a test."
+
+			result, err := client.SendMessageGPT(message)
 			if err != nil {
                 log.Fatal("Error inserting person: ", err)
             } else {
@@ -61,10 +65,44 @@ func main() {
 				fmt.Printf("%+v\n", result)
 			}
 		},
-	}
+    }
+
+    var cmdAskNaturalQuestion = &cobra.Command{
+        Use: "find_person",
+        Short: "Find the person given the context",
+        Run: func (cmd *cobra.Command, args[]string)  {
+            client := &openai.RealOpenAIClient{
+                HTTPClient: &http.Client{},
+            }
+
+            people, err := db.QueryAllPeople()
+            if err != nil {
+                log.Fatal("Error querying all people: ", err)
+            }
+
+            people_s := model.SliceToString(people)
+
+            reader := bufio.NewReader(os.Stdin)
+            context := GetUserInputContext(reader)
+            people_s += "\n" + "Tell me where I met a person in " + context
+
+            fmt.Println(people_s)
+
+            result, err := client.SendMessageGPT(people_s)
+			if err != nil {
+                log.Fatal("Error inserting person: ", err)
+            } else {
+
+				fmt.Printf("%+v\n", result)
+			}
+
+
+            },
+        }
+
 
     // Add more commands as needed
-    rootCmd.AddCommand(cmdQueryAll, cmdInsert, cmdTalkOpenAI)
+    rootCmd.AddCommand(cmdQueryAll, cmdInsert, cmdTalkOpenAI, cmdAskNaturalQuestion)
 
     // Execute the root command
     if err := rootCmd.Execute(); err != nil {

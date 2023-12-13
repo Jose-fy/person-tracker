@@ -103,7 +103,7 @@ func NewOpenAIRequest(message string) OpenAIRequest {
         Messages: []Message{
             {
                 Role: "user",
-                Content: "Hi say 'this is a test'",
+                Content: message,
             },
         },
         Temperature: 0.7,
