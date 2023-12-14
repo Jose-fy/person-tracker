@@ -91,15 +91,13 @@ func main() {
             result, err := client.SendMessageGPT(people_s)
 			if err != nil {
                 log.Fatal("Error inserting person: ", err)
-            } else {
+            }
 
-				fmt.Printf("%+v\n", result)
-			}
-
+            message := result.ParseOpenAIResponse()
+            fmt.Printf("%+v\n", message)
 
             },
         }
-
 
     // Add more commands as needed
     rootCmd.AddCommand(cmdQueryAll, cmdInsert, cmdTalkOpenAI, cmdAskNaturalQuestion)

@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+    "github.com/joho/godotenv"
 	"os"
+    "errors"
 )
 
 
@@ -21,6 +23,18 @@ type RealOpenAIClient struct {
 
 func (c *RealOpenAIClient) SendMessageGPT(message string) (OpenAIResponse, error){
 
+    if err := godotenv.Load(); err != nil {
+        log.Print("No .env file found")
+        return OpenAIResponse{}, err
+    }
+    apiKey, exists := os.LookupEnv("OPENAI_API_KEY")
+
+    if !exists {
+        log.Print("No OPENAI_API_KEY found in .env file")
+        return OpenAIResponse{}, errors.New("No OPENAI_API_KEY found in .env file")
+    }
+
+
 	request := NewOpenAIRequest(message)
 	jsonData, err := json.Marshal(request)
 
@@ -29,7 +43,6 @@ func (c *RealOpenAIClient) SendMessageGPT(message string) (OpenAIResponse, error
         return OpenAIResponse{}, err // Return an error if JSON marshaling fails
     }
 
-    apiKey := os.Getenv("OPENAI_API_KEY")
 
 	if apiKey == "" {
 		log.Fatal("API key not set in environment variables")
@@ -38,7 +51,7 @@ func (c *RealOpenAIClient) SendMessageGPT(message string) (OpenAIResponse, error
 	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(jsonData))
 
 	if err != nil {
-        log.Print("Unable to post http request")
+        log.Print("Unable to create http request object")
 		return OpenAIResponse{}, err
 	}
 
@@ -46,6 +59,11 @@ func (c *RealOpenAIClient) SendMessageGPT(message string) (OpenAIResponse, error
 	req.Header.Set("Authorization", "Bearer " + apiKey)
 
 	resp, err := c.HTTPClient.Do(req)
+
+    if err != nil {
+        log.Print("Unable to post http request")
+        return OpenAIResponse{}, err
+    }
 
 	defer resp.Body.Close()
 
@@ -83,6 +101,16 @@ type OpenAIResponse struct {
     } `json:"usage"`
     SystemFingerprint interface{} `json:"system_fingerprint"` // null in JSON, so using interface{}
 }
+
+
+func (response *OpenAIResponse) ParseOpenAIResponse() string { // Here passing by value is fine because we are not doing any changes to the response, and the response is small.
+    var result string
+    for _, choice := range response.Choices{
+        result += choice.Message.Content
+    }
+    return result
+}
+
 
 type OpenAIRequest struct {
 	Model string `json:"model"`
