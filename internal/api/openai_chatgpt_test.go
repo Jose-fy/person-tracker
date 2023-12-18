@@ -7,17 +7,17 @@ import (
 )
 
 type MockOpenAIClient struct {
-	MockResponse OpenAIResponse
+	MockResponse ChatGPTResponse
 	MockError    error
 }
 
-func (m *MockOpenAIClient) SendMessageGPT(message string) (OpenAIResponse, error) {
+func (m *MockOpenAIClient) SendMessageGPT(message string) (ChatGPTResponse, error) {
 	return m.MockResponse, m.MockError
 }
 
 func TestOpenAIConnector(t *testing.T) {
 	mockClient := MockOpenAIClient{
-		MockResponse: OpenAIResponse{
+		MockResponse: ChatGPTResponse{
 			ID:      "chatcmpl-8RrXwXB28UGKENenrJMpqoB2nTLaQ",
 			Object:  "chat.completion",
 			Created: 1701651380,
@@ -63,8 +63,8 @@ func TestOpenAIConnector(t *testing.T) {
 
 }
 
-func TestOpenAIResponseParser(t *testing.T){
-	MockResponse :=  OpenAIResponse{
+func TestChatGPTResponseParser(t *testing.T){
+	MockResponse :=  ChatGPTResponse{
 		ID:      "chatcmpl-8RrXwXB28UGKENenrJMpqoB2nTLaQ",
 		Object:  "chat.completion",
 		Created: 1701651380,
@@ -101,9 +101,9 @@ func TestOpenAIResponseParser(t *testing.T){
 		SystemFingerprint: nil,
 	}
 
-	ParsedOpenAIResponse := MockResponse.ParseOpenAIResponse()
+	ParsedChatGPTResponse := MockResponse.ParseChatGPTResponse()
 
-	assert.Equal(t, ParsedOpenAIResponse, "This is a test.", "Should say this is a test")
+	assert.Equal(t, ParsedChatGPTResponse, "This is a test.", "Should say this is a test")
 
 
 }

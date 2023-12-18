@@ -10,7 +10,7 @@ import (
 	"person-tracker/internal/api"
 	"person-tracker/internal/db"
     "person-tracker/internal/model"
-
+    "strings"
 	"github.com/spf13/cobra"
 )
 
@@ -71,10 +71,8 @@ func main() {
         Use: "find_person",
         Short: "Find the person given the context",
         Run: func (cmd *cobra.Command, args[]string)  {
-            client := &openai.RealOpenAIClient{
-                HTTPClient: &http.Client{},
-            }
 
+            client := openai.NewRealOpenAIClient(&http.Client{})
             people, err := db.QueryAllPeople()
             if err != nil {
                 log.Fatal("Error querying all people: ", err)
@@ -89,18 +87,43 @@ func main() {
             fmt.Println(people_s)
 
             result, err := client.SendMessageGPT(people_s)
+
 			if err != nil {
                 log.Fatal("Error inserting person: ", err)
             }
-
-            message := result.ParseOpenAIResponse()
+            message := result.ParseChatGPTResponse()
             fmt.Printf("%+v\n", message)
 
             },
         }
 
+    var cmdCreateEmbeddings = &cobra.Command{
+        Use: "create_embeddings",
+        Short: "Create embeddings for a given text",
+        Run: func (cmd *cobra.Command, args[]string)  {
+
+            client := openai.NewRealOpenAIClient(&http.Client{})
+
+            // ApiToken := openai.GetApiToken()
+            // client := &openai.RealOpenAIClient{
+            //     HTTPClient: &http.Client{},
+            // }
+
+        reader := bufio.NewReader(os.Stdin)
+        fmt.Println("Enter text to create embeddings for: ")
+        str, _ := reader.ReadString('\n')
+        str = strings.TrimSpace(str)
+
+        result, err := client.CreateEmbeddings(str, "text-embedding-ada-002")
+
+        if err != nil {
+            log.Fatal("Error creating embedding: ", err)
+        }
+        fmt.Printf("%+v\n", result)
+    },
+    }
     // Add more commands as needed
-    rootCmd.AddCommand(cmdQueryAll, cmdInsert, cmdTalkOpenAI, cmdAskNaturalQuestion)
+    rootCmd.AddCommand(cmdQueryAll, cmdInsert, cmdTalkOpenAI, cmdAskNaturalQuestion, cmdCreateEmbeddings)
 
     // Execute the root command
     if err := rootCmd.Execute(); err != nil {

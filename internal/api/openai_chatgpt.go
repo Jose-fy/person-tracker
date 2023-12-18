@@ -5,46 +5,22 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-    "github.com/joho/godotenv"
-	"os"
-    "errors"
 )
 
 
-type OpenAIClient interface {
-    SendMessageGPT(message string) (OpenAIResponse, error)
-}
+func (c *RealOpenAIClient) SendMessageGPT(message string) (ChatGPTResponse, error){
 
 
-type RealOpenAIClient struct {
-    HTTPClient *http.Client
-}
-
-
-func (c *RealOpenAIClient) SendMessageGPT(message string) (OpenAIResponse, error){
-
-    if err := godotenv.Load(); err != nil {
-        log.Print("No .env file found")
-        return OpenAIResponse{}, err
-    }
-    apiKey, exists := os.LookupEnv("OPENAI_API_KEY")
-
-    if !exists {
-        log.Print("No OPENAI_API_KEY found in .env file")
-        return OpenAIResponse{}, errors.New("No OPENAI_API_KEY found in .env file")
-    }
-
-
-	request := NewOpenAIRequest(message)
+	request := NewChatGPTRequest(message)
 	jsonData, err := json.Marshal(request)
 
     if err != nil {
         log.Print("Error Mashmallowing")
-        return OpenAIResponse{}, err // Return an error if JSON marshaling fails
+        return ChatGPTResponse{}, err // Return an error if JSON marshaling fails
     }
 
 
-	if apiKey == "" {
+	if c.apiKey == "" {
 		log.Fatal("API key not set in environment variables")
     }
 
@@ -52,22 +28,22 @@ func (c *RealOpenAIClient) SendMessageGPT(message string) (OpenAIResponse, error
 
 	if err != nil {
         log.Print("Unable to create http request object")
-		return OpenAIResponse{}, err
+		return ChatGPTResponse{}, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer " + apiKey)
+	req.Header.Set("Authorization", "Bearer " + c.apiKey)
 
 	resp, err := c.HTTPClient.Do(req)
 
     if err != nil {
         log.Print("Unable to post http request")
-        return OpenAIResponse{}, err
+        return ChatGPTResponse{}, err
     }
 
 	defer resp.Body.Close()
 
-	var result OpenAIResponse
+	var result ChatGPTResponse
 	decoder := json.NewDecoder(resp.Body)
 
 	err = decoder.Decode(&result)
@@ -81,7 +57,7 @@ func (c *RealOpenAIClient) SendMessageGPT(message string) (OpenAIResponse, error
 }
 
 
-type OpenAIResponse struct {
+type ChatGPTResponse struct {
     ID      string `json:"id"`
     Object  string `json:"object"`
     Created int    `json:"created"`
@@ -103,7 +79,7 @@ type OpenAIResponse struct {
 }
 
 
-func (response *OpenAIResponse) ParseOpenAIResponse() string { // Here passing by value is fine because we are not doing any changes to the response, and the response is small.
+func (response *ChatGPTResponse) ParseChatGPTResponse() string { // Here passing by value is fine because we are not doing any changes to the response, and the response is small.
     var result string
     for _, choice := range response.Choices{
         result += choice.Message.Content
@@ -112,7 +88,7 @@ func (response *OpenAIResponse) ParseOpenAIResponse() string { // Here passing b
 }
 
 
-type OpenAIRequest struct {
+type ChatGPTRequest struct {
 	Model string `json:"model"`
 	Messages []Message `json:"messages"`
 	Temperature float32 `json:"temperature"`
@@ -125,8 +101,8 @@ type Message struct {
 }
 
 
-func NewOpenAIRequest(message string) OpenAIRequest {
-    return OpenAIRequest{
+func NewChatGPTRequest(message string) ChatGPTRequest {
+    return ChatGPTRequest{
         Model: "gpt-3.5-turbo",
         Messages: []Message{
             {
