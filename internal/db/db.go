@@ -3,7 +3,9 @@ package db
 import (
 	"database/sql"
 	"log"
+	openai "person-tracker/internal/api"
 	"person-tracker/internal/model"
+	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -92,4 +94,61 @@ func processRows(rows *sql.Rows) ([]model.Person, error) {
 		return nil, err
 	}
 	return people, nil
+}
+
+func AsyncCreateEmbedddingsForAllPeople(c *openai.RealOpenAIClient, people []model.Person, model_name string) ([]openai.EmbeddingsResponse, error) {
+
+	errCh := make(chan error, len(people))
+
+	resCh := make(chan openai.EmbeddingsResponse, len(people))
+
+	var wg sync.WaitGroup
+
+	for _, person := range people {
+		// Start a new goroutine
+		wg.Add(1)
+		go func(p model.Person) {
+			defer wg.Done()
+
+			// Call CreateEmbeddings
+			res, err := c.CreateEmbeddings(p.Name+"  "+p.Context, model_name)
+			if err != nil {
+				errCh <- err
+			} else {
+				resCh <- res
+			}
+		}(person)
+	}
+	wg.Wait()
+
+	close(errCh)
+	close(resCh)
+
+	for err := range errCh {
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var results []openai.EmbeddingsResponse
+	for res := range resCh {
+		results = append(results, res)
+	}
+
+	return results, nil
+
+}
+
+func CreateEmbedddingsForAllPeople(c *openai.RealOpenAIClient, people []model.Person, model string) ([]openai.EmbeddingsResponse, error) {
+	var responses []openai.EmbeddingsResponse
+
+	for _, person := range people {
+		res, err := c.CreateEmbeddings(person.Name+"  "+person.Context, model)
+		if err != nil {
+			return nil, err
+		}
+		responses = append(responses, res)
+	}
+
+	return responses, nil
 }

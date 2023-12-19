@@ -3,14 +3,13 @@ package openai
 import (
 	"bytes"
 	"encoding/json"
-	"log"
+		"log"
 	"net/http"
 )
 
 func (c *RealOpenAIClient) CreateEmbeddings(text string, model string) (EmbeddingsResponse, error) {
 
 	request := NewEmbeddingsRequest(text, model)
-	log.Print(request)
 	jsonData, err := json.Marshal(request)
 
 	if err != nil {
@@ -28,11 +27,9 @@ func (c *RealOpenAIClient) CreateEmbeddings(text string, model string) (Embeddin
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.apiKey)
 
-	log.Print(req.Header)
 
 	resp, err := c.HTTPClient.Do(req)
 
-	log.Print(resp)
 	if err != nil {
 		log.Print("Unable to post http request")
 		return EmbeddingsResponse{}, err

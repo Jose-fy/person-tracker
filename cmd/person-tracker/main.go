@@ -12,6 +12,7 @@ import (
     "person-tracker/internal/model"
     "strings"
 	"github.com/spf13/cobra"
+    "time"
 )
 
 func main() {
@@ -93,21 +94,15 @@ func main() {
             }
             message := result.ParseChatGPTResponse()
             fmt.Printf("%+v\n", message)
-
             },
         }
 
-    var cmdCreateEmbeddings = &cobra.Command{
-        Use: "create_embeddings",
+    var cmdCreateEmbedding = &cobra.Command{
+        Use: "create_embedding",
         Short: "Create embeddings for a given text",
         Run: func (cmd *cobra.Command, args[]string)  {
 
-            client := openai.NewRealOpenAIClient(&http.Client{})
-
-            // ApiToken := openai.GetApiToken()
-            // client := &openai.RealOpenAIClient{
-            //     HTTPClient: &http.Client{},
-            // }
+        client := openai.NewRealOpenAIClient(&http.Client{})
 
         reader := bufio.NewReader(os.Stdin)
         fmt.Println("Enter text to create embeddings for: ")
@@ -122,8 +117,29 @@ func main() {
         fmt.Printf("%+v\n", result)
     },
     }
+
+    var cmdCreateEmbeddingsForAllPeople = &cobra.Command{
+        Use: "create_embeddings",
+        Short: "Create embeddings for a given text",
+        Run: func(cmd *cobra.Command, args []string) {
+
+            client := openai.NewRealOpenAIClient(&http.Client{})
+            people, err := db.QueryAllPeople()
+
+            if err != nil {
+                log.Fatal("Error querying all people: ", err)
+            }
+
+            // Async call
+            result, err := db.AsyncCreateEmbedddingsForAllPeople(client, people, "text-embedding-ada-002")
+
+            log.Print("Len result", len(result))
+        },
+    }
+
+
     // Add more commands as needed
-    rootCmd.AddCommand(cmdQueryAll, cmdInsert, cmdTalkOpenAI, cmdAskNaturalQuestion, cmdCreateEmbeddings)
+    rootCmd.AddCommand(cmdQueryAll, cmdInsert, cmdTalkOpenAI, cmdAskNaturalQuestion, cmdCreateEmbedding, cmdCreateEmbeddingsForAllPeople)
 
     // Execute the root command
     if err := rootCmd.Execute(); err != nil {
