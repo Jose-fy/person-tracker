@@ -12,7 +12,6 @@ import (
     "person-tracker/internal/model"
     "strings"
 	"github.com/spf13/cobra"
-    "time"
 )
 
 func main() {
@@ -86,7 +85,6 @@ func main() {
             people_s += "\n" + "Tell me where I met a person in " + context
 
             fmt.Println(people_s)
-
             result, err := client.SendMessageGPT(people_s)
 
 			if err != nil {
@@ -136,7 +134,6 @@ func main() {
             log.Print("Len result", len(result))
         },
     }
-
 
     // Add more commands as needed
     rootCmd.AddCommand(cmdQueryAll, cmdInsert, cmdTalkOpenAI, cmdAskNaturalQuestion, cmdCreateEmbedding, cmdCreateEmbeddingsForAllPeople)
